@@ -1,0 +1,1697 @@
+<html><head><base href="." />
+<meta charset="UTF-8">
+<title>Screen Destruction Simulator</title>
+<style>
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: 'Comic Sans MS', cursive;
+    background: #1a1a1a;
+    color: #fff;
+}
+
+@keyframes screenShake {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(-5px, -5px); }
+    50% { transform: translate(5px, 5px); }
+    75% { transform: translate(-5px, 5px); }
+}
+
+@keyframes rageScreenPunch {
+    0% { transform: scale(1); }
+    25% { transform: scale(0.95) rotate(-1deg); }
+    50% { transform: scale(0.98) rotate(1deg); }
+    75% { transform: scale(0.95) rotate(-1deg); }
+    100% { transform: scale(1); }
+}
+
+@keyframes fallAndRotate {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(200px) rotate(360deg); opacity: 0; }
+}
+
+#screen {
+    width: 800px;
+    height: 500px;
+    margin: 20px auto;
+    border: 10px solid #333;
+    position: relative;
+    background: #000;
+    overflow: hidden;
+}
+
+#money {
+    font-size: 24px;
+    color: #2ecc71;
+    margin: 10px;
+}
+
+.tool-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px auto;
+    max-width: 1000px;
+}
+
+.tool {
+    background: #333;
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    text-align: center;
+}
+
+.tool:hover {
+    transform: scale(1.05);
+    background: #444;
+}
+
+.tool.selected {
+    border: 3px solid #2ecc71;
+    background: #444;
+}
+
+.tool.owned {
+    border: 2px solid #3498db;
+}
+
+.crack {
+    position: absolute;
+    pointer-events: none;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes dance {
+    0% { transform: rotate(0deg) translateY(0); }
+    25% { transform: rotate(20deg) translateY(-10px); }
+    75% { transform: rotate(-20deg) translateY(-10px); }
+    100% { transform: rotate(0deg) translateY(0); }
+}
+
+@keyframes wobble {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(-30deg) scale(1.2); }
+    75% { transform: rotate(30deg) scale(0.8); }
+}
+
+@keyframes fadeIn {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes explode {
+    0% { transform: scale(0); opacity: 1; }
+    50% { transform: scale(2); opacity: 0.8; }
+    100% { transform: scale(3); opacity: 0; }
+}
+
+@keyframes glitch {
+    0% { transform: translate(0, 0) skew(0deg); }
+    20% { transform: translate(-10px, 5px) skew(10deg); }
+    40% { transform: translate(10px, -5px) skew(-10deg); }
+    60% { transform: translate(-5px, 2px) skew(5deg); }
+    80% { transform: translate(5px, -2px) skew(-5deg); }
+    100% { transform: translate(0, 0) skew(0deg); }
+}
+
+.silly {
+    color: #ff69b4;
+    font-weight: bold;
+}
+
+#damage-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.free-tool {
+    border: 2px solid #2ecc71;
+    position: relative;
+}
+
+.free-tool::after {
+    content: 'FREE!';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #2ecc71;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+#reset-button {
+    background: #e74c3c;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 18px;
+    margin: 10px;
+    transition: transform 0.2s;
+}
+
+#reset-button:hover {
+    transform: scale(1.1);
+}
+
+.flash {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+    animation: flash 0.2s ease-out;
+}
+
+@keyframes flash {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.rubber-duck {
+    font-size: 40px;
+    animation: bounce 1s infinite, spin 2s infinite;
+}
+
+.wet-noodle {
+    font-size: 30px;
+    animation: wobble 0.5s infinite;
+}
+
+.dancing-banana {
+    font-size: 35px;
+    animation: dance 0.8s infinite;
+}
+
+.grandma-slipper {
+    font-size: 45px;
+    animation: spin 1s infinite, bounce 1.5s infinite;
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(-20px) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(200px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+@keyframes plasma {
+    0% { transform: scale(1); filter: hue-rotate(0deg); }
+    50% { transform: scale(1.5); filter: hue-rotate(180deg); }
+    100% { transform: scale(1); filter: hue-rotate(360deg); }
+}
+
+@keyframes lightning {
+    0% { filter: brightness(1); transform: skew(0deg); }
+    25% { filter: brightness(3); transform: skew(20deg); }
+    50% { filter: brightness(1); transform: skew(-20deg); }
+    75% { filter: brightness(3); transform: skew(20deg); }
+    100% { filter: brightness(1); transform: skew(0deg); }
+}
+
+@keyframes potato-rage {
+    0% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.4) rotate(-30deg); }
+    50% { transform: scale(0.8) rotate(30deg); }
+    75% { transform: scale(1.2) rotate(-15deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes unicorn-magic {
+    0% { transform: translateX(0) translateY(0) rotate(0deg); filter: hue-rotate(0deg); }
+    25% { transform: translateX(20px) translateY(-20px) rotate(90deg); filter: hue-rotate(90deg); }
+    50% { transform: translateX(-20px) translateY(20px) rotate(180deg); filter: hue-rotate(180deg); }
+    75% { transform: translateX(20px) translateY(20px) rotate(270deg); filter: hue-rotate(270deg); }
+    100% { transform: translateX(0) translateY(0) rotate(360deg); filter: hue-rotate(360deg); }
+}
+
+.angry-potato {
+    font-size: 35px;
+    animation: potato-rage 0.5s infinite;
+    text-shadow: 0 0 10px #ff4400;
+}
+
+.squeaky-unicorn {
+    font-size: 40px;
+    animation: unicorn-magic 1s infinite;
+    text-shadow: 0 0 10px #ff00ff;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translate(-50%, -50%); }
+    25% { transform: translate(-52%, -48%); }
+    75% { transform: translate(-48%, -52%); }
+}
+
+.free-money-button {
+    background: linear-gradient(45deg, #ffd700, #ff6b6b) !important;
+    text-shadow: 0 0 10px #fff;
+    animation: glow 1s infinite;
+}
+
+@keyframes glow {
+    0%, 100% { box-shadow: 0 0 10px #ffd700; }
+    50% { box-shadow: 0 0 20px #ff6b6b; }
+}
+
+@keyframes rainbow {
+    0% { color: #ff0000; }
+    10% { color: #ff8800; }
+    20% { color: #ffff00; }
+    30% { color: #88ff00; }
+    40% { color: #00ff00; }
+    50% { color: #00ff88; }
+    60% { color: #00ffff; }
+    70% { color: #0088ff; }
+    80% { color: #0000ff; }
+    90% { color: #8800ff; }
+    100% { color: #ff0088; }
+}
+
+@keyframes rage {
+    0% { transform: scale(1) rotate(0deg); filter: hue-rotate(0deg) brightness(1); }
+    25% { transform: scale(1.2) rotate(-10deg); filter: hue-rotate(90deg) brightness(2); }
+    50% { transform: scale(0.9) rotate(10deg); filter: hue-rotate(180deg) brightness(1.5); }
+    75% { transform: scale(1.1) rotate(-5deg); filter: hue-rotate(270deg) brightness(2); }
+    100% { transform: scale(1) rotate(0deg); filter: hue-rotate(360deg) brightness(1); }
+}
+
+@keyframes plasma-effect {
+    0% { 
+        transform: scale(1) rotate(0deg);
+        filter: hue-rotate(0deg) brightness(2);
+        opacity: 0.8;
+    }
+    50% { 
+        transform: scale(1.5) rotate(180deg);
+        filter: hue-rotate(180deg) brightness(3);
+        opacity: 1;
+    }
+    100% { 
+        transform: scale(1) rotate(360deg);
+        filter: hue-rotate(360deg) brightness(2);
+        opacity: 0.8;
+    }
+}
+
+@keyframes plasma-glow {
+    0% { filter: drop-shadow(0 0 5px #00ffff) drop-shadow(0 0 10px #0088ff); }
+    50% { filter: drop-shadow(0 0 15px #ff00ff) drop-shadow(0 0 20px #ff88ff); }
+    100% { filter: drop-shadow(0 0 5px #00ffff) drop-shadow(0 0 10px #0088ff); }
+}
+
+@keyframes divine-beam {
+  0% { transform: scaleY(0); opacity: 0; }
+  50% { transform: scaleY(1); opacity: 1; }
+  100% { transform: scaleY(0); opacity: 0; }
+}
+
+@keyframes holy-explosion {
+  0% { transform: scale(0); opacity: 1; }
+  50% { transform: scale(2); opacity: 0.8; }
+  100% { transform: scale(3); opacity: 0; }
+}
+
+@keyframes thunder-strike {
+  0% { filter: brightness(1); transform: scale(1); }
+  25% { filter: brightness(3); transform: scale(1.2); }
+  50% { filter: brightness(1); transform: scale(1); }
+  75% { filter: brightness(3); transform: scale(1.2); }
+  100% { filter: brightness(1); transform: scale(1); }
+}
+
+@keyframes rage-punch {
+    0% { transform: scale(0) rotate(0deg); opacity: 0; }
+    50% { transform: scale(1.5) rotate(-10deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 0; }
+}
+
+@keyframes rage-scream {
+    0% { transform: scale(0); filter: hue-rotate(0deg); }
+    50% { transform: scale(2); filter: hue-rotate(180deg); }
+    100% { transform: scale(3); filter: hue-rotate(360deg); }
+}
+
+@keyframes keyboard-smash {
+    0% { transform: translateY(-100px) rotate(0deg); opacity: 0; }
+    50% { transform: translateY(0) rotate(180deg); opacity: 1; }
+    100% { transform: translateY(50px) rotate(360deg); opacity: 0; }
+}
+
+@keyframes pc-explosion {
+    0% { transform: scale(0) rotate(0deg); opacity: 1; }
+    50% { transform: scale(1.5) rotate(-10deg); opacity: 1; }
+    100% { transform: scale(2) rotate(0deg); opacity: 0; }
+}
+
+.divine-attack {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1000;
+}
+</style>
+</head>
+<body>
+    <div id="money">Money: $0</div>
+    <div id="screen">
+        <div id="damage-overlay"></div>
+    </div>
+    <button id="reset-button" onclick="resetScreen()">Reset Screen</button>
+    <div class="tool-container" id="tools"></div>
+
+<script>
+let money = 0; // Changed initial money to 0
+let selectedTool = null;
+let ownedTools = new Set(['Hammer']); // Start with hammer owned
+
+const tools = [
+    { name: "Hammer", price: 0, damage: 15, effect: "crack", free: true, moneyGain: 5 },
+    { name: "Baseball Bat", price: 75, damage: 20, effect: "shatter", moneyGain: 25 },
+    { name: "Rubber Duck", price: 5, damage: 1, effect: "squeak", silly: true, moneyGain: 2 },
+    { name: "Nuclear Bomb", price: 500, damage: 100, effect: "explode", moneyGain: 150 },
+    { name: "Wet Noodle", price: 2, damage: 0.1, effect: "splat", silly: true, moneyGain: 1 },
+    { name: "Grandmother's Slipper", price: 20, damage: 5, effect: "slap", silly: true, moneyGain: 8 },
+    { 
+        name: "Professional Wrecker", 
+        price: 200, 
+        damage: 40, 
+        effect: "wreck", 
+        moneyGain: 75 
+    },
+    { name: "Pixelated Virus", price: 750, damage: 85, effect: "virus", moneyGain: 220 },
+    { name: "Dancing Banana", price: 15, damage: 3, effect: "peel", silly: true, moneyGain: 5 },
+    { name: "Plasma Cutter", price: 350, damage: 50, effect: "plasma", moneyGain: 120 },
+    { name: "Attack of GOD", price: 600, damage: 80, effect: "lightning", moneyGain: 200 },
+    { name: "Angry Potato", price: 8, damage: 2, effect: "potato", silly: true, moneyGain: 3 },
+    { name: "FREE MONEY!!!", price: 0, damage: 0, effect: "scam", silly: true, moneyGain: 8180120980932380290, free: true },
+    { name: "Laser Beam", price: 450, damage: 60, effect: "laser", moneyGain: 140 },
+    { name: "Soundwave Machine", price: 400, damage: 55, effect: "sonic", moneyGain: 130 },
+    { name: "Black Hole", price: 800, damage: 90, effect: "void", moneyGain: 250 },
+    { name: "Ice Breaker", price: 250, damage: 35, effect: "freeze", moneyGain: 85 },
+    { name: "Rage Gamer", price: 580, damage: 38, effect: "rage", moneyGain: 90 }, // Updated price from 280 to 580
+    { name: "Diamond Drill", price: 550, damage: 70, effect: "drill", moneyGain: 180 }
+];
+
+function updateMoney() {
+    document.getElementById('money').textContent = `Money: $${money}`;
+}
+
+function resetScreen() {
+    document.getElementById('damage-overlay').innerHTML = '';
+}
+
+function createFlash() {
+    const flash = document.createElement('div');
+    flash.classList.add('flash');
+    document.getElementById('damage-overlay').appendChild(flash);
+    setTimeout(() => flash.remove(), 200);
+}
+
+function createSillyEffect(tool, x, y) {
+    const effect = document.createElement('div');
+    effect.classList.add('crack');
+    
+    switch(tool.name) {
+        case "Rubber Duck":
+            effect.innerHTML = '🦆 QUACK!';
+            effect.classList.add('rubber-duck');
+            break;
+        case "Wet Noodle":
+            effect.innerHTML = '🍜 *splat*';
+            effect.classList.add('wet-noodle');
+            break;
+        case "Dancing Banana":
+            effect.innerHTML = '🍌 ♪♫♬';
+            effect.classList.add('dancing-banana');
+            break;
+        case "Grandmother's Slipper":
+            effect.innerHTML = '👡 *WHACK*';
+            effect.classList.add('grandma-slipper');
+            break;
+        case "Angry Potato":
+            effect.innerHTML = '🥔 *POTATO RAGE!!* 🥔';
+            effect.classList.add('angry-potato');
+            break;
+        case "FREE MONEY!!!":
+            const scamOverlay = document.createElement('div');
+            scamOverlay.style.position = 'absolute';
+            scamOverlay.style.top = '50%';
+            scamOverlay.style.left = '50%';
+            scamOverlay.style.transform = 'translate(-50%, -50%)';
+            scamOverlay.style.background = 'rgba(0, 0, 0, 0.9)';
+            scamOverlay.style.padding = '20px'; 
+            scamOverlay.style.borderRadius = '20px';
+            scamOverlay.style.zIndex = '9999';
+            scamOverlay.style.animation = 'wobble 0.5s infinite';
+            
+            const moneyEmojis = ['💰', '💵', '💸', '🤑', '💶', '💷'];
+            let scamHTML = '<div style="font-size: 30px; text-align: center;">'; 
+            
+            for (let i = 0; i < 5; i++) { 
+                const emoji = moneyEmojis[Math.floor(Math.random() * moneyEmojis.length)];
+                scamHTML += `<span style="display: inline-block; animation: wobble ${0.2 + Math.random()}s infinite;">${emoji}</span> `;
+            }
+            
+            scamHTML += '<br><div style="animation: rainbow 0.001s infinite linear;">YOU GOT SCAMMED LOL!</div><br>';
+            
+            for (let i = 0; i < 5; i++) { 
+                const emoji = moneyEmojis[Math.floor(Math.random() * moneyEmojis.length)];
+                scamHTML += `<span style="display: inline-block; animation: wobble ${0.2 + Math.random()}s infinite;">${emoji}</span> `;
+            }
+            
+            scamHTML += '</div>';
+            
+            scamOverlay.innerHTML = scamHTML;
+            document.getElementById('damage-overlay').appendChild(scamOverlay);
+            
+            const stolenAmount = Math.floor(money * 0.5);
+            money -= stolenAmount;
+            updateMoney();
+            
+            setTimeout(() => {
+                scamOverlay.remove();
+            }, 2000);
+            
+            return; 
+    }
+    
+    effect.style.left = (x - 50) + 'px';
+    effect.style.top = (y - 50) + 'px';
+    
+    const soundText = document.createElement('div');
+    soundText.style.position = 'absolute';
+    soundText.style.left = (x + 30) + 'px';
+    soundText.style.top = (y - 30) + 'px';
+    soundText.style.animation = 'fadeOut 1s forwards';
+    soundText.style.fontSize = '24px';
+    soundText.style.color = '#ff69b4';
+    soundText.textContent = `-$${tool.moneyGain} LOL!`;
+    
+    document.getElementById('damage-overlay').appendChild(effect);
+    document.getElementById('damage-overlay').appendChild(soundText);
+    
+    setTimeout(() => {
+        soundText.remove();
+        effect.remove();
+    }, 2000);
+}
+
+function createDivineAttack(x, y, tool) {
+  const attacks = [
+    {
+      name: "Divine Beam",
+      create: () => {
+        const beam = document.createElement('div');
+        beam.classList.add('divine-attack');
+        beam.innerHTML = `
+          <svg width="200" height="500" viewBox="0 0 200 500">
+            <defs>
+              <linearGradient id="beamGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+                <stop offset="50%" style="stop-color:#ffff00;stop-opacity:0.8" />
+                <stop offset="100%" style="stop-color:#ffa500;stop-opacity:0.6" />
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="200" height="500" fill="url(#beamGradient)">
+              <animate attributeName="opacity" values="1;0.3;1" dur="0.5s" repeatCount="2"/>
+            </rect>
+            <text x="100" y="250" fill="white" font-size="40" text-anchor="middle">✟</text>
+          </svg>
+        `;
+        beam.style.left = `${x - 100}px`;
+        beam.style.top = `${y - 500}px`;
+        beam.style.animation = 'divine-beam 1s forwards';
+        return {
+          element: beam,
+          crackPattern: `
+            <svg width="300" height="300" viewBox="0 0 300 300">
+              <defs>
+                <radialGradient id="beamCrack">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="100%" stop-color="#ffd700"/>
+                </radialGradient>
+              </defs>
+              ${Array(8).fill().map(() => `
+                <path d="M150,150 
+                  L${150 + Math.random()*150-75},${150 + Math.random()*150-75}" 
+                  stroke="url(#beamCrack)" 
+                  stroke-width="4"
+                  opacity="0.8">
+                  <animate attributeName="stroke-dasharray" values="0,500;500,0" dur="0.5s"/>
+                </path>
+              `).join('')}
+            </svg>`
+        };
+      }
+    },
+    {
+      name: "Thunder Wrath",
+      create: () => {
+        const thunder = document.createElement('div');
+        thunder.classList.add('divine-attack');
+        thunder.innerHTML = `
+          <svg width="300" height="300" viewBox="0 0 300 300">
+            <defs>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            <g filter="url(#glow)">
+              ${Array(5).fill().map(() => `
+                <path d="M${150 + Math.random()*50-25},0 
+                         L${150 + Math.random()*100-50},${150 + Math.random()*50-25} 
+                         L${150 + Math.random()*150-75},300"
+                      stroke="#ffff00" 
+                      stroke-width="4" 
+                      fill="none">
+                  <animate attributeName="opacity" values="0;1;0" dur="0.3s"/>
+                </path>
+              `).join('')}
+            </g>
+            <text x="150" y="150" fill="white" font-size="50" text-anchor="middle">⚡</text>
+          </svg>
+        `;
+        thunder.style.left = `${x - 150}px`;
+        thunder.style.top = `${y - 150}px`;
+        thunder.style.animation = 'thunder-strike 0.5s';
+        return {
+          element: thunder,
+          crackPattern: `
+            <svg width="300" height="300" viewBox="0 0 300 300">
+              <defs>
+                <linearGradient id="thunderCrack">
+                  <stop offset="0%" stop-color="#ffff00"/>
+                  <stop offset="100%" stop-color="#ff8800"/>
+                </linearGradient>
+              </defs>
+              ${Array(6).fill().map(() => `
+                <path d="M150,150 
+                  Q${150 + Math.random()*100-50},${150 + Math.random()*100-50} 
+                  ${150 + Math.random()*200-100},${150 + Math.random()*200-100}"
+                  stroke="url(#thunderCrack)" 
+                  stroke-width="5"
+                  fill="none"
+                  opacity="0.7">
+                  <animate attributeName="stroke-dasharray" values="0,1000;1000,0" dur="0.3s"/>
+                </path>
+              `).join('')}
+            </svg>`
+        };
+      }
+    },
+    {
+      name: "Holy Judgment",
+      create: () => {
+        const judgment = document.createElement('div');
+        judgment.classList.add('divine-attack');
+        judgment.innerHTML = `
+          <svg width="400" height="400" viewBox="0 0 400 400">
+            <defs>
+              <radialGradient id="holyGlow">
+                <stop offset="0%" style="stop-color:#ffffff"/>
+                <stop offset="50%" style="stop-color:#ffff00"/>
+                <stop offset="100%" style="stop-color:#ffd700"/>
+              </radialGradient>
+            </defs>
+            <circle cx="200" cy="200" r="180" fill="url(#holyGlow)" opacity="0.8">
+              <animate attributeName="r" values="0;180;0" dur="1s"/>
+            </circle>
+            <text x="200" y="200" fill="white" font-size="80" text-anchor="middle">✙</text>
+            ${Array(8).fill().map((_, i) => `
+              <path d="M200,200 L${200 + 180*Math.cos(i*Math.PI/4)},${200 + 180*Math.sin(i*Math.PI/4)}"
+                    stroke="white" stroke-width="3">
+                <animate attributeName="stroke-dasharray" values="0,1000;1000,0" dur="0.5s"/>
+              </path>
+            `).join('')}
+          </svg>
+        `;
+        judgment.style.left = `${x - 200}px`;
+        judgment.style.top = `${y - 200}px`;
+        judgment.style.animation = 'holy-explosion 1s';
+        return {
+          element: judgment,
+          crackPattern: `
+            <svg width="300" height="300" viewBox="0 0 300 300">
+              <defs>
+                <radialGradient id="holyCrack">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="50%" stop-color="#ffd700"/>
+                  <stop offset="100%" stop-color="#ff8c00"/>
+                </radialGradient>
+              </defs>
+              <circle cx="150" cy="150" r="100" 
+                fill="none" 
+                stroke="url(#holyCrack)" 
+                stroke-width="3"
+                opacity="0.6">
+                <animate attributeName="r" values="0;100" dur="0.5s"/>
+              </circle>
+              ${Array(12).fill().map((_, i) => `
+                <path d="M150,150 
+                  L${150 + 100*Math.cos(i*Math.PI/6)},${150 + 100*Math.sin(i*Math.PI/6)}"
+                  stroke="url(#holyCrack)" 
+                  stroke-width="3"
+                  opacity="0.8">
+                  <animate attributeName="stroke-dasharray" values="0,500;500,0" dur="0.5s"/>
+                </path>
+              `).join('')}
+            </svg>`
+        };
+      }
+    }
+  ];
+
+  const attack = attacks[Math.floor(Math.random() * attacks.length)];
+  const result = attack.create();
+  
+  document.getElementById('damage-overlay').appendChild(result.element);
+  
+  const crack = document.createElement('div');
+  crack.classList.add('crack');
+  crack.style.left = (x - 150) + 'px';
+  crack.style.top = (y - 150) + 'px';
+  crack.innerHTML = result.crackPattern;
+  document.getElementById('damage-overlay').appendChild(crack);
+  
+  setTimeout(() => result.element.remove(), 1000);
+}
+
+function createCrack(x, y, tool) {
+    if (tool.silly) {
+        createSillyEffect(tool, x, y);
+        money -= tool.moneyGain;
+    } else {
+        const crack = document.createElement('div');
+        crack.classList.add('crack');
+        
+        const size = Math.min(300, tool.damage * 3);
+        
+        switch(tool.name) {
+            case "Plasma Cutter":
+                const plasmaSize = size * 1.5;
+                crack.innerHTML = `
+                    <svg width="${plasmaSize}" height="${plasmaSize}" viewBox="0 0 ${plasmaSize} ${plasmaSize}">
+                        <defs>
+                            <radialGradient id="plasmaGradient">
+                                <stop offset="0%" stop-color="#00ffff"/>
+                                <stop offset="50%" stop-color="#0088ff"/>
+                                <stop offset="100%" stop-color="#0000ff"/>
+                            </radialGradient>
+                            <filter id="plasmaBlur">
+                                <feGaussianBlur stdDeviation="3"/>
+                            </filter>
+                        </defs>
+                        
+                        <circle cx="${plasmaSize/2}" cy="${plasmaSize/2}" r="${plasmaSize/4}"
+                                fill="url(#plasmaGradient)"
+                                filter="url(#plasmaBlur)"
+                                style="animation: plasma-effect 0.8s infinite, plasma-glow 1s infinite"/>
+                        
+                        ${Array(8).fill().map((_, i) => {
+                            const angle = (i * 45) * Math.PI / 180;
+                            const x2 = plasmaSize/2 + Math.cos(angle) * plasmaSize/2;
+                            const y2 = plasmaSize/2 + Math.sin(angle) * plasmaSize/2;
+                            return `<line x1="${plasmaSize/2}" y1="${plasmaSize/2}" 
+                                          x2="${x2}" y2="${y2}"
+                                          stroke="url(#plasmaGradient)"
+                                          stroke-width="10"
+                                          filter="url(#plasmaBlur)"
+                                          opacity="0.7">
+                                <animate attributeName="opacity"
+                                        values="0.7;0.2;0.7"
+                                        dur="${0.5 + Math.random()*0.5}s"
+                                        repeatCount="indefinite"/>
+                            </line>`;
+                        }).join('')}
+                        
+                        ${Array(12).fill().map(() => `
+                            <circle cx="${plasmaSize/2}" cy="${plasmaSize/2}" r="5"
+                                    fill="#00ffff"
+                                    opacity="0.8">
+                                <animateMotion
+                                    dur="${0.5 + Math.random()}s"
+                                    repeatCount="indefinite"
+                                    path="M 0,0 Q ${Math.random()*100-50},${Math.random()*100-50} ${Math.random()*200-100},${Math.random()*200-100}"/>
+                            </circle>
+                        `).join('')}
+                    </svg>`;
+                crack.style.animation = 'plasma-effect 0.8s';
+                break;
+            case "Attack of GOD":
+                createDivineAttack(x, y, tool);
+                return; 
+            case "Black Hole":
+                crack.style.animation = 'spin 0.5s, explode 1.5s';
+                break;
+            case "Laser Beam":
+                const laserSize = size * 1.5;
+                crack.innerHTML = `
+                    <svg width="${laserSize}" height="${laserSize}" viewBox="0 0 ${laserSize} ${laserSize}">
+                        <defs>
+                            <radialGradient id="laserGlow">
+                                <stop offset="0%" stop-color="#ff0000"/>
+                                <stop offset="50%" stop-color="#ff4444"/>
+                                <stop offset="100%" stop-color="#ff8888"/>
+                            </radialGradient>
+                            <filter id="laserBlur">
+                                <feGaussianBlur stdDeviation="2"/>
+                                <feColorMatrix type="matrix"
+                                    values="1 0 0 0 0
+                                            0 0.2 0 0 0
+                                            0 0 0.2 0 0
+                                            0 0 0 1 0"/>
+                            </filter>
+                            <linearGradient id="laserBeam">
+                                <stop offset="0%" stop-color="#ff0000"/>
+                                <stop offset="50%" stop-color="#ff8800"/>
+                                <stop offset="100%" stop-color="#ffff00"/>
+                            </linearGradient>
+                        </defs>
+                        
+                        <!-- Core laser circle -->
+                        <circle cx="${laserSize/2}" cy="${laserSize/2}" r="${laserSize/6}"
+                            fill="url(#laserGlow)" opacity="0.8" filter="url(#laserBlur)">
+                            <animate attributeName="r" 
+                                values="${laserSize/6};${laserSize/4};${laserSize/6}"
+                                dur="0.5s" repeatCount="2"/>
+                        </circle>
+
+                        <!-- Spinning laser beams -->
+                        ${Array(6).fill().map((_, i) => `
+                            <line x1="${laserSize/2}" y1="${laserSize/2}"
+                                x2="${laserSize/2 + laserSize/2 * Math.cos(i * Math.PI/3)}"
+                                y2="${laserSize/2 + laserSize/2 * Math.sin(i * Math.PI/3)}"
+                                stroke="url(#laserBeam)"
+                                stroke-width="15"
+                                opacity="0.7"
+                                filter="url(#laserBlur)">
+                                <animateTransform
+                                    attributeName="transform"
+                                    type="rotate"
+                                    from="0 ${laserSize/2} ${laserSize/2}"
+                                    to="360 ${laserSize/2} ${laserSize/2}"
+                                    dur="1s"
+                                    repeatCount="2"/>
+                            </line>
+                        `).join('')}
+
+                        <!-- Explosion particles -->
+                        ${Array(12).fill().map(() => `
+                            <circle cx="${laserSize/2}" cy="${laserSize/2}" r="5"
+                                fill="#ff0000"
+                                opacity="0.8">
+                                <animate attributeName="r"
+                                    values="5;${laserSize/4}"
+                                    dur="${0.5 + Math.random() * 0.5}s"
+                                    fill="freeze"/>
+                                <animate attributeName="opacity"
+                                    values="0.8;0"
+                                    dur="${0.5 + Math.random() * 0.5}s"
+                                    fill="freeze"/>
+                                <animateMotion
+                                    dur="${0.5 + Math.random() * 0.5}s"
+                                    fill="freeze"
+                                    path="M 0,0 Q ${Math.random()*200-100},${Math.random()*200-100} ${Math.random()*300-150},${Math.random()*300-150}"/>
+                            </circle>
+                        `).join('')}
+                    </svg>`;
+
+                // Create laser crack pattern
+                const crackPattern = document.createElement('div');
+                crackPattern.classList.add('crack');
+                crackPattern.innerHTML = `
+                    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                        <defs>
+                            <linearGradient id="laserCrack">
+                                <stop offset="0%" stop-color="#ff0000"/>
+                                <stop offset="100%" stop-color="#ff8800"/>
+                            </linearGradient>
+                        </defs>
+                        ${Array(8).fill().map(() => `
+                            <path d="M ${size/2},${size/2} 
+                                Q ${size/2 + Math.random() * 100 - 50},${size/2 + Math.random() * 100 - 50}
+                                ${size/2 + Math.random() * 200 - 100},${size/2 + Math.random() * 200 - 100}"
+                                stroke="url(#laserCrack)"
+                                stroke-width="3"
+                                fill="none"
+                                opacity="0.7">
+                                <animate attributeName="stroke-dasharray"
+                                    values="0,1000;1000,0"
+                                    dur="0.5s"
+                                    fill="freeze"/>
+                            </path>
+                        `).join('')}
+                        <!-- Burn marks -->
+                        ${Array(5).fill().map(() => `
+                            <circle cx="${size/2 + Math.random() * 100 - 50}"
+                                cy="${size/2 + Math.random() * 100 - 50}"
+                                r="${5 + Math.random() * 10}"
+                                fill="#ff0000"
+                                opacity="0.3">
+                                <animate attributeName="opacity"
+                                    values="0.3;0.1"
+                                    dur="1s"
+                                    fill="freeze"/>
+                            </circle>
+                        `).join('')}
+                    </svg>`;
+                crackPattern.style.left = (x - size/2) + 'px';
+                crackPattern.style.top = (y - size/2) + 'px';
+                document.getElementById('damage-overlay').appendChild(crackPattern);
+
+                // Add screen effects
+                document.getElementById('screen').style.animation = 'screenShake 0.3s';
+                setTimeout(() => {
+                    document.getElementById('screen').style.animation = '';
+                }, 300);
+
+                crack.style.left = (x - laserSize/2) + 'px';
+                crack.style.top = (y - laserSize/2) + 'px';
+                document.getElementById('damage-overlay').appendChild(crack);
+                
+                // Add timeout to remove laser effect
+                setTimeout(() => {
+                    crack.remove();
+                }, 1000);
+                
+                money += tool.moneyGain;
+                updateMoney();
+                return;
+            case "Rage Gamer":
+                const rageSize = size * 1.5;
+                const rageAttack = Math.random() < 0.33 ? "keyboard" : (Math.random() < 0.5 ? "scream" : "computer"); // Randomly choose between 3 attacks
+                
+                if (rageAttack === "keyboard") {
+                    crack.innerHTML = `
+                        <svg width="${rageSize}" height="${rageSize}" viewBox="0 0 ${rageSize} ${rageSize}">
+                            <defs>
+                                <filter id="rageBlur">
+                                    <feGaussianBlur stdDeviation="2"/>
+                                </filter>
+                            </defs>
+                            
+                            <!-- Impact shockwave -->
+                            <circle cx="${rageSize/2}" cy="${rageSize/2}" r="${rageSize/4}"
+                                    fill="none" stroke="red" stroke-width="3"
+                                    opacity="0.7">
+                                <animate attributeName="r"
+                                    values="0;${rageSize/2}"
+                                    dur="0.5s"
+                                    fill="freeze"/>
+                                <animate attributeName="opacity"
+                                    values="0.7;0"
+                                    dur="0.5s"
+                                    fill="freeze"/>
+                            </circle>
+                            
+                            <!-- Crack lines -->
+                            ${Array(8).fill().map(() => `
+                                <path d="M${rageSize/2},${rageSize/2} 
+                                    Q${rageSize/2 + Math.random()*100-50},${rageSize/2 + Math.random()*100-50}
+                                    ${rageSize/2 + Math.random()*200-100},${rageSize/2 + Math.random()*200-100}"
+                                    stroke="white"
+                                    stroke-width="2"
+                                    fill="none">
+                                    <animate attributeName="stroke-dasharray"
+                                        values="0,1000;1000,0"
+                                        dur="0.3s"
+                                        fill="freeze"/>
+                                </path>
+                            `).join('')}
+                        </svg>`;
+
+                    // Create falling keyboard letters
+                    const letters = 'QWERTYUIOPASDFGHJKLZXCVBNM1234567890';
+                    const numLetters = 15;
+                    
+                    for (let i = 0; i < numLetters; i++) {
+                        const letter = document.createElement('div');
+                        letter.style.position = 'absolute';
+                        letter.style.left = `${x + Math.random() * 200 - 100}px`;
+                        letter.style.top = `${y + Math.random() * 20}px`;
+                        letter.style.color = 'white';
+                        letter.style.fontSize = `${20 + Math.random() * 10}px`;
+                        letter.style.fontFamily = 'monospace';
+                        letter.style.fontWeight = 'bold';
+                        letter.style.textShadow = '0 0 5px rgba(255,255,255,0.7)';
+                        letter.style.animation = `fallAndRotate ${1 + Math.random()}s forwards`;
+                        letter.textContent = letters[Math.floor(Math.random() * letters.length)];
+                        document.getElementById('damage-overlay').appendChild(letter);
+                        
+                        setTimeout(() => letter.remove(), 2000);
+                    }
+                } else if (rageAttack === "scream") {
+                    // Scream attack
+                    const rageTexts = ['NOOBS!!', 'LAG!!', 'AUGHHH!!', 'COME ON!!', 'WHY!!', 'NOT FAIR!!', 'HACKS!!', 'PING!!'];
+                    const rageText = rageTexts[Math.floor(Math.random() * rageTexts.length)];
+                    
+                    crack.innerHTML = `
+                        <svg width="${rageSize}" height="${rageSize}" viewBox="0 0 ${rageSize} ${rageSize}">
+                            <defs>
+                                <filter id="rageGlow">
+                                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                                    <feMerge>
+                                        <feMergeNode in="coloredBlur"/>
+                                        <feMergeNode in="SourceGraphic"/>
+                                    </feMerge>
+                                </feMerge>
+                                <linearGradient id="rageGradient">
+                                    <stop offset="0%" stop-color="#ff0000"/>
+                                    <stop offset="50%" stop-color="#ff4444"/>
+                                    <stop offset="100%" stop-color="#ff0000"/>
+                                </linearGradient>
+                            </defs>
+                            
+                            <!-- Shockwave circles -->
+                            ${Array(3).fill().map((_, i) => `
+                                <circle cx="${rageSize/2}" cy="${rageSize/2}" r="${rageSize/4}"
+                                        fill="none" stroke="url(#rageGradient)" stroke-width="${3 - i}"
+                                        opacity="0.7" filter="url(#rageGlow)">
+                                    <animate attributeName="r"
+                                        values="0;${rageSize/2 + i*20}"
+                                        dur="${0.5 + i*0.2}s"
+                                        fill="freeze"/>
+                                    <animate attributeName="opacity"
+                                        values="0.7;0"
+                                        dur="${0.5 + i*0.2}s"
+                                        fill="freeze"/>
+                                </circle>
+                            `).join('')}
+                            
+                            <!-- Rage Text -->
+                            <text x="${rageSize/2}" y="${rageSize/2}" 
+                                  text-anchor="middle" 
+                                  dominant-baseline="middle"
+                                  fill="red"
+                                  font-size="40"
+                                  font-weight="bold"
+                                  font-family="Impact"
+                                  filter="url(#rageGlow)">
+                                ${rageText}
+                                <animate attributeName="font-size"
+                                    values="0;40;30;40"
+                                    dur="0.5s"
+                                    repeatCount="2"/>
+                                <animateTransform
+                                    attributeName="transform"
+                                    type="rotate"
+                                    values="0 ${rageSize/2} ${rageSize/2};-5 ${rageSize/2} ${rageSize/2};5 ${rageSize/2} ${rageSize/2};0 ${rageSize/2} ${rageSize/2}"
+                                    dur="0.1s"
+                                    repeatCount="5"/>
+                            </text>
+                        </svg>`;
+                } else {
+                    // New computer smash attack
+                    crack.innerHTML = `
+                        <svg width="${rageSize}" height="${rageSize}" viewBox="0 0 ${rageSize} ${rageSize}">
+                            <defs>
+                                <filter id="explosionBlur">
+                                    <feGaussianBlur stdDeviation="3"/>
+                                </filter>
+                                <radialGradient id="explosionGradient">
+                                    <stop offset="0%" stop-color="#ff6600"/>
+                                    <stop offset="50%" stop-color="#ff3300"/>
+                                    <stop offset="100%" stop-color="#ff0000"/>
+                                </radialGradient>
+                            </defs>
+                            
+                            <!-- Initial computer impact -->
+                            <text x="${rageSize/2}" y="${rageSize/2}" 
+                                  font-size="60" 
+                                  text-anchor="middle" 
+                                  dominant-baseline="middle">
+                                💻
+                                <animateTransform
+                                    attributeName="transform"
+                                    type="scale"
+                                    values="3;1;0.8"
+                                    dur="0.3s"
+                                    fill="freeze"/>
+                            </text>
+                            
+                            <!-- Explosion rings -->
+                            ${Array(4).fill().map((_, i) => `
+                                <circle cx="${rageSize/2}" cy="${rageSize/2}" r="0"
+                                        fill="none" 
+                                        stroke="url(#explosionGradient)" 
+                                        stroke-width="${6-i}"
+                                        opacity="0.8"
+                                        filter="url(#explosionBlur)">
+                                    <animate attributeName="r"
+                                        values="0;${rageSize/2 + i*30}"
+                                        dur="0.4 + i*0.1}s"
+                                        fill="freeze"/>
+                                    <animate attributeName="opacity"
+                                        values="0.8;0"
+                                        dur="0.4 + i*0.1}s"
+                                        fill="freeze"/>
+                                </circle>
+                            `).join('')}
+                            
+                            <!-- Explosion particles -->
+                            ${Array(12).fill().map(() => `
+                                <circle cx="${rageSize/2}" cy="${rageSize/2}" r="4"
+                                        fill="#ff6600"
+                                        opacity="0.8">
+                                    <animate attributeName="r"
+                                        values="4;8;2"
+                                        dur="0.5s"
+                                        fill="freeze"/>
+                                    <animate attributeName="opacity"
+                                        values="0.8;0"
+                                        dur="0.5s"
+                                        fill="freeze"/>
+                                    <animateMotion
+                                        dur="0.5s"
+                                        fill="freeze"
+                                        path="M 0,0 Q ${Math.random()*200-100},${Math.random()*200-100} ${Math.random()*300-150},${Math.random()*300-150}"/>
+                                </circle>
+                            `).join('')}
+                            
+                            <!-- Fire debris -->
+                            ${Array(8).fill().map(() => `
+                                <text x="${rageSize/2}" y="${rageSize/2}"
+                                      font-size="20"
+                                      text-anchor="middle">
+                                    ${['🔥', '💥', '⚡'][Math.floor(Math.random()*3)]}
+                                    <animateMotion
+                                        dur="${0.5 + Math.random()*0.5}s"
+                                        fill="freeze"
+                                        path="M 0,0 Q ${Math.random()*200-100},${Math.random()*100} ${Math.random()*300-150},${Math.random()*300}"/>
+                                    <animate attributeName="opacity"
+                                        values="1;0"
+                                        dur="${0.5 + Math.random()*0.5}s"
+                                        fill="freeze"/>
+                                </text>
+                            `).join('')}
+                            
+                            <!-- Circuit/computer parts debris -->
+                            ${Array(6).fill().map(() => `
+                                <text x="${rageSize/2}" y="${rageSize/2}"
+                                      font-size="20"
+                                      text-anchor="middle">
+                                    ${['⚙️', '🔧', '🖨️', '🖱️', '⌨️'][Math.floor(Math.random()*5)]}
+                                    <animateMotion
+                                        dur="${0.8 + Math.random()*0.7}s"
+                                        fill="freeze"
+                                        path="M 0,0 Q ${Math.random()*200-100},${Math.random()*100} ${Math.random()*300-150},${Math.random()*300}"/>
+                                    <animate attributeName="opacity"
+                                        values="1;0"
+                                        dur="${0.8 + Math.random()*0.7}s"
+                                        fill="freeze"/>
+                                </text>
+                            `).join('')}
+                        </svg>`;
+                }
+
+                // Add screen shake for all attacks
+                document.getElementById('screen').style.animation = 'screenShake 0.3s';
+                setTimeout(() => {
+                    document.getElementById('screen').style.animation = '';
+                }, 300);
+
+                crack.style.left = (x - rageSize/2) + 'px';
+                crack.style.top = (y - rageSize/2) + 'px';
+                document.getElementById('damage-overlay').appendChild(crack);
+                
+                money += tool.moneyGain;
+                updateMoney();
+                return;
+            case "Diamond Drill": {
+                const drillSize = size * 1.5;
+                crack.innerHTML = `
+                    <svg width="${drillSize}" height="${drillSize}" viewBox="0 0 ${drillSize} ${drillSize}">
+                        <defs>
+                            <filter id="drillGlow">
+                                <feGaussianBlur stdDeviation="3" result="blur"/>
+                                <feFlood flood-color="#00ffff"/>
+                                <feComposite in2="blur" operator="in"/>
+                                <feBlend in="SourceGraphic"/>
+                            </filter>
+                            <linearGradient id="diamondGradient">
+                                <stop offset="0%" stop-color="#00ffff"/>
+                                <stop offset="50%" stop-color="#88ffff"/>
+                                <stop offset="100%" stop-color="#ffffff"/>
+                            </linearGradient>
+                            <radialGradient id="drillHoleGradient">
+                                <stop offset="0%" stop-color="#000000"/>
+                                <stop offset="70%" stop-color="#222222"/>
+                                <stop offset="100%" stop-color="#444444"/>
+                            </radialGradient>
+                        </defs>
+
+                        <!-- Drill Hole -->
+                        <circle cx="${drillSize/2}" cy="${drillSize/2}" r="0"
+                                fill="url(#drillHoleGradient)">
+                            <animate attributeName="r"
+                                values="0;${drillSize/4}"
+                                dur="0.5s"
+                                fill="freeze"/>
+                        </circle>
+
+                        <!-- Diamond Drill Bits -->
+                        ${Array(8).fill().map((_, i) => `
+                            <g transform="rotate(${i * 45} ${drillSize/2} ${drillSize/2})">
+                                <path d="M${drillSize/2-20},${drillSize/2} 
+                                         l20,-20 l20,20 l-20,20 z"
+                                      fill="url(#diamondGradient)"
+                                      filter="url(#drillGlow)">
+                                    <animateTransform
+                                        attributeName="transform"
+                                        type="rotate"
+                                        from="0 ${drillSize/2} ${drillSize/2}"
+                                        to="360 ${drillSize/2} ${drillSize/2}"
+                                        dur="0.5s"
+                                        repeatCount="2"/>
+                                </path>
+                            </g>
+                        `).join('')}
+
+                        <!-- Sparks -->
+                        ${Array(12).fill().map(() => `
+                            <circle cx="${drillSize/2}" cy="${drillSize/2}" r="2"
+                                    fill="#ffffff"
+                                    opacity="0.8">
+                                <animate attributeName="r"
+                                    values="2;0"
+                                    dur="${0.3 + Math.random() * 0.4}s"
+                                    fill="freeze"/>
+                                <animate attributeName="opacity"
+                                    values="0.8;0"
+                                    dur="${0.3 + Math.random() * 0.4}s"
+                                    fill="freeze"/>
+                                <animateMotion
+                                    dur="${0.3 + Math.random() * 0.4}s"
+                                    fill="freeze"
+                                    path="M 0,0 Q ${Math.random()*100-50},${Math.random()*100-50} 
+                                         ${Math.random()*200-100},${Math.random()*200-100}"/>
+                            </circle>
+                        `).join('')}
+
+                        <!-- Diamond Shards -->
+                        ${Array(6).fill().map(() => `
+                            <path d="M${drillSize/2},${drillSize/2} 
+                                     l${Math.random()*10-5},${-Math.random()*10} 
+                                     l${Math.random()*10-5},${-Math.random()*10} z"
+                                  fill="#88ffff"
+                                  opacity="0.9">
+                                <animateMotion
+                                    dur="${0.5 + Math.random() * 0.5}s"
+                                    fill="freeze"
+                                    path="M 0,0 Q ${Math.random()*150-75},${Math.random()*150-75} 
+                                         ${Math.random()*300-150},${Math.random()*300-150}"/>
+                                <animate attributeName="opacity"
+                                    values="0.9;0"
+                                    dur="${0.5 + Math.random() * 0.5}s"
+                                    fill="freeze"/>
+                            </path>
+                        `).join('')}
+                    </svg>`;
+
+                // Add screen shake effect
+                document.getElementById('screen').style.animation = 'screenShake 0.5s';
+                setTimeout(() => {
+                    document.getElementById('screen').style.animation = '';
+                }, 500);
+
+                // Create metal debris effect
+                for (let i = 0; i < 8; i++) {
+                    const debris = document.createElement('div');
+                    debris.style.position = 'absolute';
+                    debris.style.left = `${x + Math.random() * 100 - 50}px`;
+                    debris.style.top = `${y + Math.random() * 100 - 50}px`;
+                    debris.innerHTML = `<span style="color: #88ffff; text-shadow: 0 0 5px #00ffff;">💎</span>`;
+                    debris.style.animation = `fall ${Math.random() * 1 + 0.5}s forwards`;
+                    document.getElementById('damage-overlay').appendChild(debris);
+                    setTimeout(() => debris.remove(), 1500);
+                }
+
+                crack.style.left = (x - drillSize/2) + 'px';
+                crack.style.top = (y - drillSize/2) + 'px';
+                document.getElementById('damage-overlay').appendChild(crack);
+
+                // Add final crack pattern after drill animation
+                setTimeout(() => {
+                    const crackPattern = document.createElement('div');
+                    crackPattern.classList.add('crack');
+                    crackPattern.innerHTML = `
+                        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                            <circle cx="${size/2}" cy="${size/2}" r="${size/4}"
+                                    fill="#000000"/>
+                            ${Array(8).fill().map(() => `
+                                <path d="M ${size/2},${size/2} 
+                                         Q ${size/2 + Math.random()*100-50},${size/2 + Math.random()*100-50}
+                                         ${size/2 + Math.random()*200-100},${size/2 + Math.random()*200-100}"
+                                      stroke="#444444"
+                                      stroke-width="3"
+                                      fill="none">
+                                    <animate attributeName="stroke-dasharray"
+                                        values="0,1000;1000,0"
+                                        dur="0.3s"
+                                        fill="freeze"/>
+                                </path>
+                            `).join('')}
+                        </svg>`;
+                    crackPattern.style.left = (x - size/2) + 'px';
+                    crackPattern.style.top = (y - size/2) + 'px';
+                    document.getElementById('damage-overlay').appendChild(crackPattern);
+                    crack.remove();
+                }, 1000);
+
+                money += tool.moneyGain;
+                updateMoney();
+                return;
+            }
+            case "Soundwave Machine": {
+                const waveSize = size * 2; // Bigger effect area
+                crack.innerHTML = `
+                    <svg width="${waveSize}" height="${waveSize}" viewBox="0 0 ${waveSize} ${waveSize}">
+                        <defs>
+                            <filter id="soundBlur">
+                                <feGaussianBlur stdDeviation="2"/>
+                            </filter>
+                            <linearGradient id="waveGradient">
+                                <stop offset="0%" stop-color="#4400ff"/>
+                                <stop offset="50%" stop-color="#0088ff"/>
+                                <stop offset="100%" stop-color="#00ffff"/>
+                            </linearGradient>
+                            <radialGradient id="pulseGradient">
+                                <stop offset="0%" stop-color="#ffffff"/>
+                                <stop offset="50%" stop-color="#4400ff"/>
+                                <stop offset="100%" stop-color="transparent"/>
+                            </radialGradient>
+                        </defs>
+
+                        <!-- Center Speaker -->
+                        <circle cx="${waveSize/2}" cy="${waveSize/2}" r="${waveSize/8}"
+                                fill="#333"
+                                stroke="url(#waveGradient)"
+                                stroke-width="4">
+                            <animate attributeName="r" 
+                                values="${waveSize/8};${waveSize/7};${waveSize/8}"
+                                dur="0.2s"
+                                repeatCount="5"/>
+                        </circle>
+
+                        <!-- Sound Waves -->
+                        ${Array(4).fill().map((_, i) => `
+                            <circle cx="${waveSize/2}" cy="${waveSize/2}" r="${waveSize/8}"
+                                    fill="none"
+                                    stroke="url(#waveGradient)"
+                                    stroke-width="3"
+                                    opacity="0.7">
+                                <animate attributeName="r"
+                                    values="0;${waveSize/2}"
+                                    dur="0.5s"
+                                    begin="${i * 0.1}s"
+                                    fill="freeze"/>
+                                <animate attributeName="opacity"
+                                    values="0.7;0"
+                                    dur="0.5s"
+                                    begin="${i * 0.1}s"
+                                    fill="freeze"/>
+                            </circle>
+                        `).join('')}
+
+                        <!-- Musical Notes -->
+                        ${Array(8).fill().map((_, i) => `
+                            <text x="${waveSize/2}" y="${waveSize/2}"
+                                  font-size="30"
+                                  fill="#4400ff"
+                                  text-anchor="middle"
+                                  filter="url(#soundBlur)">
+                                ${['♪', '♫', '♬', '♩'][Math.floor(Math.random() * 4)]}
+                                <animateMotion
+                                    dur="${0.5 + Math.random() * 0.5}s"
+                                    fill="freeze"
+                                    path="M 0,0 Q ${Math.random()*200-100},${Math.random()*200-100} 
+                                         ${Math.random()*300-150},${Math.random()*300-150}"/>
+                                <animate attributeName="opacity"
+                                    values="1;0"
+                                    dur="${0.5 + Math.random() * 0.5}s"
+                                    fill="freeze"/>
+                            </text>
+                        `).join('')}
+
+                        <!-- Pulse Effect -->
+                        <circle cx="${waveSize/2}" cy="${waveSize/2}" r="0"
+                                fill="url(#pulseGradient)">
+                            <animate attributeName="r"
+                                values="0;${waveSize/2}"
+                                dur="0.5s"
+                                fill="freeze"/>
+                            <animate attributeName="opacity"
+                                values="0.8;0"
+                                dur="0.5s"
+                                fill="freeze"/>
+                        </circle>
+
+                        <!-- Equalizer Bars -->
+                        ${Array(8).fill().map((_, i) => `
+                            <rect x="${waveSize/2 - 80 + i * 20}" 
+                                  y="${waveSize/2 - 40}"
+                                  width="10" 
+                                  height="80"
+                                  fill="url(#waveGradient)"
+                                  opacity="0.8">
+                                <animate attributeName="height"
+                                    values="80;${20 + Math.random() * 60};80"
+                                    dur="${0.2 + Math.random() * 0.3}s"
+                                    repeatCount="4"/>
+                                <animate attributeName="y"
+                                    values="${waveSize/2 - 40};${waveSize/2 - 10 - Math.random() * 30};${waveSize/2 - 40}"
+                                    dur="${0.2 + Math.random() * 0.3}s"
+                                    repeatCount="4"/>
+                            </rect>
+                        `).join('')}
+                    </svg>`;
+
+                // Add intense screen shake
+                document.getElementById('screen').style.animation = 'none';
+                setTimeout(() => {
+                    document.getElementById('screen').style.animation = 'screenShake 0.2s 5';
+                }, 0);
+                setTimeout(() => {
+                    document.getElementById('screen').style.animation = '';
+                }, 1000);
+
+                // Add crack pattern after sound wave effect
+                setTimeout(() => {
+                    const crackPattern = document.createElement('div');
+                    crackPattern.classList.add('crack');
+                    crackPattern.innerHTML = `
+                        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                            <defs>
+                                <radialGradient id="soundCrack">
+                                    <stop offset="0%" stop-color="#4400ff"/>
+                                    <stop offset="100%" stop-color="#00ffff"/>
+                                </radialGradient>
+                            </defs>
+                            <!-- Center Impact -->
+                            <circle cx="${size/2}" cy="${size/2}" r="${size/6}"
+                                    fill="#000000"/>
+                            ${Array(12).fill().map(() => `
+                                <path d="M ${size/2},${size/2} 
+                                         Q ${size/2 + Math.random()*100-50},${size/2 + Math.random()*100-50}
+                                         ${size/2 + Math.random()*200-100},${size/2 + Math.random()*200-100}"
+                                      stroke="url(#soundCrack)"
+                                      stroke-width="3"
+                                      fill="none">
+                                    <animate attributeName="stroke-dasharray"
+                                        values="0,1000;1000,0"
+                                        dur="0.3s"
+                                        fill="freeze"/>
+                                </path>
+                            `).join('')}
+                        </svg>`;
+                    crackPattern.style.left = (x - size/2) + 'px';
+                    crackPattern.style.top = (y - size/2) + 'px';
+                    document.getElementById('damage-overlay').appendChild(crackPattern);
+                    crack.remove();
+                }, 1000);
+
+                crack.style.left = (x - waveSize/2) + 'px';
+                crack.style.top = (y - waveSize/2) + 'px';
+                document.getElementById('damage-overlay').appendChild(crack);
+
+                money += tool.moneyGain;
+                updateMoney();
+                return;
+            }
+        }
+        
+        const paths = [];
+        const numCracks = Math.ceil(tool.damage / 10);
+        
+        if (tool.name === "Professional Wrecker") {
+            const wreckSize = Math.min(400, tool.damage * 4);
+            crack.innerHTML = `
+                <svg width="${wreckSize}" height="${wreckSize}" viewBox="0 0 ${wreckSize} ${wreckSize}">
+                    <defs>
+                        <filter id="shake">
+                            <feOffset dx="2" dy="2" result="offset1">
+                                <animate attributeName="dx" values="2;-2;2" dur="0.1s" repeatCount="indefinite"/>
+                                <animate attributeName="dy" values="2;-2;2" dur="0.1s" repeatCount="indefinite"/>
+                            </feOffset>
+                        </filter>
+                    </defs>
+                    
+                    ${Array(8).fill().map(() => `
+                        <g transform="translate(${Math.random() * wreckSize}, ${Math.random() * wreckSize})">
+                            ${['🔨', '⚒️', '🛠️', '⛏️', '🔧', '🪛', '👷'][Math.floor(Math.random() * 7)]}
+                            <animateTransform attributeName="transform"
+                                type="rotate"
+                                from="0 ${wreckSize/2} ${wreckSize/2}"
+                                to="360 ${wreckSize/2} ${wreckSize/2}"
+                                dur="${Math.random() * 2 + 1}s"
+                                repeatCount="indefinite"/>
+                        </g>
+                    `).join('')}
+                    
+                    ${Array(6).fill().map(() => `
+                        <path d="M${wreckSize/2},${wreckSize/2} 
+                                 Q${Math.random() * wreckSize},${Math.random() * wreckSize} 
+                                  ${Math.random() * wreckSize},${Math.random() * wreckSize}"
+                            stroke="white" 
+                            stroke-width="4" 
+                            fill="none">
+                            <animate attributeName="stroke-dasharray" 
+                                     values="0,1000;1000,0" 
+                                     dur="0.5s" 
+                                     fill="freeze"/>
+                        </path>
+                    `).join('')}
+                </svg>`;
+            
+            document.getElementById('screen').style.animation = 'wobble 0.5s';
+            setTimeout(() => {
+                document.getElementById('screen').style.animation = '';
+            }, 500);
+            
+            for (let i = 0; i < 10; i++) {
+                const debris = document.createElement('div');
+                debris.style.position = 'absolute';
+                debris.style.left = `${x + Math.random() * 100 - 50}px`;
+                debris.style.top = `${y + Math.random() * 100 - 50}px`;
+                debris.style.fontSize = '20px';
+                debris.textContent = ['🧱', '🪨', '🔧', '⚙️'][Math.floor(Math.random() * 4)];
+                debris.style.animation = `fall ${Math.random() * 2 + 1}s forwards`;
+                document.getElementById('damage-overlay').appendChild(debris);
+                setTimeout(() => debris.remove(), 2000);
+            }
+        } else {
+            for (let i = 0; i < numCracks; i++) {
+                paths.push(`M${size/2} ${size/2} 
+                           L${Math.random() * size} ${Math.random() * size} 
+                           M${size/2} ${size/2} 
+                           L${Math.random() * size} ${Math.random() * size}`);
+            }
+
+            const svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                ${paths.map(p => `<path d="${p}" stroke="white" stroke-width="${Math.max(2, tool.damage/10)}" fill="none">
+                    <animate attributeName="stroke-opacity" from="0" to="1" dur="0.3s" />
+                </path>`).join('')}
+            </svg>`;
+            crack.innerHTML = svg;
+
+            if (tool.name === "Nuclear Bomb") {
+                crack.style.animation = 'explode 1s ease-out';
+            }
+            if (tool.name === "Pixelated Virus") {
+                const virusSize = size * 2;
+                crack.innerHTML = `
+                    <svg width="${virusSize}" height="${virusSize}" viewBox="0 0 ${virusSize} ${virusSize}">
+                        <defs>
+                            <filter id="virusGlitch">
+                                <feFlood flood-color="lime" result="flood1"/>
+                                <feFlood flood-color="red" result="flood2"/>
+                                <feComposite in="flood1" in2="SourceAlpha" operator="out" result="comp1"/>
+                                <feComposite in="flood2" in2="SourceAlpha" operator="out" result="comp2"/>
+                                <feOffset in="comp1" dx="-3" dy="0" result="offset1"/>
+                                <feOffset in="comp2" dx="3" dy="0" result="offset2"/>
+                                <feBlend in="offset1" in2="offset2" mode="screen" result="blend"/>
+                            </filter>
+                            
+                            <radialGradient id="virusGradient">
+                                <stop offset="0%" stop-color="#00ff00"/>
+                                <stop offset="50%" stop-color="#008800"/>
+                                <stop offset="100%" stop-color="#004400"/>
+                            </radialGradient>
+                        </defs>
+
+                        <!-- Virus Core -->
+                        <g filter="url(#virusGlitch)">
+                            <circle cx="${virusSize/2}" cy="${virusSize/2}" r="${virusSize/6}"
+                                    fill="url(#virusGradient)">
+                                <animate attributeName="r" 
+                                    values="${virusSize/6};${virusSize/5};${virusSize/6}"
+                                    dur="0.5s" repeatCount="indefinite"/>
+                            </circle>
+                        </g>
+
+                        <!-- Binary Code Rain -->
+                        ${Array(20).fill().map((_, i) => `
+                            <text x="${Math.random() * virusSize}" y="-20"
+                                fill="#00ff00" font-family="monospace" font-size="20">
+                                ${Math.random() > 0.5 ? "1" : "0"}
+                                <animate attributeName="y"
+                                    values="-20;${virusSize + 20}"
+                                    dur="${1 + Math.random()}s"
+                                    begin="${Math.random()}s"
+                                    repeatCount="indefinite"/>
+                                <animate attributeName="opacity"
+                                    values="1;0.5;1"
+                                    dur="${0.5 + Math.random()}s"
+                                    repeatCount="indefinite"/>
+                            </text>
+                        `).join('')}
+
+                        <!-- Error Messages -->
+                        ${Array(4).fill().map((_, i) => `
+                            <text x="${virusSize/2}" y="${virusSize/2}"
+                                fill="red" font-family="monospace" font-size="15"
+                                text-anchor="middle">
+                                ERROR ${Math.floor(Math.random() * 9999)}
+                                <animateMotion
+                                    dur="${0.5 + Math.random()}s"
+                                    repeatCount="indefinite"
+                                    path="M 0,0 Q ${Math.random()*100-50},${Math.random()*100-50} ${Math.random()*200-100},${Math.random()*200-100}"/>
+                                <animate attributeName="opacity"
+                                    values="0;1;0"
+                                    dur="${0.5 + Math.random()}s"
+                                    repeatCount="indefinite"/>
+                            </text>
+                        `).join('')}
+
+                        <!-- Spreading Virus Particles -->
+                        ${Array(8).fill().map(() => `
+                            <circle cx="${virusSize/2}" cy="${virusSize/2}" r="5"
+                                fill="#00ff00" opacity="0.8">
+                                <animate attributeName="r"
+                                    values="5;10;5"
+                                    dur="${0.5 + Math.random()}s"
+                                    repeatCount="indefinite"/>
+                                <animateMotion
+                                    dur="${1 + Math.random()}s"
+                                    repeatCount="indefinite"
+                                    path="M 0,0 Q ${Math.random()*200-100},${Math.random()*200-100} ${Math.random()*300-150},${Math.random()*300-150}"/>
+                            </circle>
+                        `).join('')}
+
+                        <!-- Digital Corruption Effect -->
+                        ${Array(6).fill().map(() => `
+                            <rect x="${Math.random() * virusSize}"
+                                y="${Math.random() * virusSize}"
+                                width="${20 + Math.random() * 40}"
+                                height="2"
+                                fill="#00ff00"
+                                opacity="0.5">
+                                <animate attributeName="x"
+                                    values="0;${virusSize}"
+                                    dur="${0.2 + Math.random()}s"
+                                    repeatCount="indefinite"/>
+                                <animate attributeName="opacity"
+                                    values="0.5;0;0.5"
+                                    dur="${0.2 + Math.random()}s"
+                                    repeatCount="indefinite"/>
+                            </rect>
+                        `).join('')}
+                    </svg>`;
+            }
+        }
+        
+        crack.style.left = (x - 50) + 'px';
+        crack.style.top = (y - 50) + 'px';
+        document.getElementById('damage-overlay').appendChild(crack);
+        money += tool.moneyGain;
+    }
+    
+    createFlash();
+    updateMoney();
+}
+
+function selectTool(tool, element) {
+    if (!tool.free && !ownedTools.has(tool.name)) {
+        if (money >= tool.price) {
+            money -= tool.price;
+            ownedTools.add(tool.name);
+            element.classList.add('owned');
+            const lines = element.innerHTML.split('<br>');
+            lines[1] = 'BOUGHT!';
+            element.innerHTML = lines.join('<br>');
+            updateMoney();
+        } else {
+            alert("Not enough money to buy this tool!");
+            return;
+        }
+    }
+
+    document.querySelectorAll('.tool').forEach(t => t.classList.remove('selected'));
+    element.classList.add('selected');
+    selectedTool = tool;
+    
+    const screen = document.getElementById('screen');
+    screen.onclick = (e) => {
+        const rect = screen.getBoundingClientRect();
+        createCrack(e.clientX - rect.left, e.clientY - rect.top, tool);
+    };
+}
+
+function initializeTools() {
+    const toolContainer = document.getElementById('tools');
+    tools.forEach(tool => {
+        const toolElement = document.createElement('div');
+        toolElement.classList.add('tool');
+        if (tool.silly) toolElement.classList.add('silly');
+        if (tool.free) toolElement.classList.add('free-tool');
+        if (ownedTools.has(tool.name)) toolElement.classList.add('owned');
+        
+        const priceDisplay = tool.free ? 'FREE!' : 
+                           ownedTools.has(tool.name) ? 'BOUGHT!' : 
+                           '$' + tool.price;
+        
+        toolElement.innerHTML = `
+            ${tool.name}<br>
+            ${priceDisplay}<br>
+            Damage: ${tool.damage}<br>
+            Money Gain: $${tool.moneyGain}
+        `;
+        
+        toolElement.onclick = () => selectTool(tool, toolElement);
+        toolContainer.appendChild(toolElement);
+    });
+}
+
+initializeTools();
+</script>
+</body>
+</html>
